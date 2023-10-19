@@ -24,8 +24,8 @@ userRouter.route("/updateUser")
 userRouter.route("/deleteUser")
 .delete(auth,userController.deleteUser);
 
-userRouter.route("/changePassword")
-.patch(userController.changePassword);
+userRouter.route("/changePassword/:id")
+.patch(auth,userController.changePassword);
 
 userRouter.route("/forgetPassword")
 .patch(userController.forgetPassword);

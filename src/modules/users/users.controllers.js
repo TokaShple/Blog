@@ -4,7 +4,7 @@ import catchAsyncError from "../../utlis/middleware/catchAsyncError.js";
 import AppError from "../../utlis/services/AppError.js";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../../utlis/services/sendEmail.js";
-import { where } from "sequelize";
+import { DATE, where } from "sequelize";
 
 //              1-SIGN UP
 const signup =catchAsyncError (async (req,res,next)=>{
@@ -136,7 +136,16 @@ const deleteUser=catchAsyncError(async(req,res,next)=>{
 //              7-change Password
 const changePassword=catchAsyncError(async(req,res,next)=>{
   try{
-    
+    const {id} = req.params;
+    const {password} = req.body;
+    const hashedPassword = await bcrypt.hash(password, parseInt(process.env.Rounds));
+    const result = await userSchema.findByPk(id);
+    await userSchema.update({password},{where:{id}});
+    result.password = hashedPassword;
+    result.changePasswordAt= Date.now();
+    await result.save();
+    !result && next (new AppError("CANNOT CHANGE PASSWORD!!!",400));
+    result && res.status(200).json({message:"Password have been updated...",result});
   }catch(err){
     console.log(err);
     res.status(500).json({message:"ERROR!!!",err});

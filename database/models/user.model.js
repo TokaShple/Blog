@@ -1,6 +1,7 @@
 import { connection } from "../connection.js";
 import { DataTypes } from "sequelize";
 import bcrypt from "bcrypt";
+
 export const userSchema = connection.define("user",{
   id:{
     type:DataTypes.INTEGER,
@@ -55,6 +56,9 @@ export const userSchema = connection.define("user",{
   },
   lastseen:{
     type:DataTypes.DATE,
+  },
+  changePasswordAt:{
+    type:DataTypes.DATE,
   }
 },
 {
@@ -80,9 +84,11 @@ userSchema.beforeUpdate(async (user, options) => {
       const salt = await bcrypt.genSalt(parseInt(process.env.Rounds));
       const hashedPassword = await bcrypt.hash(user.password, salt);
       user.password = hashedPassword;
+      user.changePasswordAt = new Date();
     }
   } catch (error) {
     throw error;
   }
 });
+
 connection.sync();
