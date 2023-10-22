@@ -85,6 +85,7 @@ userSchema.beforeUpdate(async (user, options) => {
       const hashedPassword = await bcrypt.hash(user.password, salt);
       user.password = hashedPassword;
       user.changePasswordAt = new Date();
+      console.log("password Hashed correctly....",hashedPassword);
     }
   } catch (error) {
     throw error;

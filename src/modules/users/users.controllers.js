@@ -26,34 +26,6 @@ const signup =catchAsyncError (async (req,res,next)=>{
     }
 })
 
-//              2-SIGN IN
-const signin=catchAsyncError(async(req,res,next)=>{
-  try{
-    let {email,password} = req.body;
-    let isFound=await userSchema.findOne({where:{email}});
-    if(!isFound) { 
-      next (new AppError("WRONG EMAIL !!!",400)) 
-    }else{
-      let matched= await bcrypt.compare(password,isFound.password);
-      if(!matched){
-        next (new AppError("WRONG PASSWORD !!!",401));
-      }else{
-        let token=jwt.sign({
-          name:isFound.name,
-          userId:isFound.id,
-          role:isFound.role,
-          email:isFound.email
-        }, process.env.SECRET_KEY);
-        let userActive=await userSchema.update({active:true},{where:{email,active:false}});
-        return res.status(200).json({message:"LOGIN SUCCESS...",token,userActive});
-      }
-    }
-  }catch(err){
-    console.log(err);
-    res.status(500).json({message:"ERROR!!!!!",err})
-  }
-})
-
 //          3-Verification
 const verification=catchAsyncError(async(req,res,next)=>{
   try{
@@ -136,19 +108,52 @@ const deleteUser=catchAsyncError(async(req,res,next)=>{
 //              7-change Password
 const changePassword=catchAsyncError(async(req,res,next)=>{
   try{
-    const {id} = req.params;
-    const {password} = req.body;
-    const hashedPassword = await bcrypt.hash(password, parseInt(process.env.Rounds));
-    const result = await userSchema.findByPk(id);
-    await userSchema.update({password},{where:{id}});
-    result.password = hashedPassword;
-    result.changePasswordAt= Date.now();
-    await result.save();
-    !result && next (new AppError("CANNOT CHANGE PASSWORD!!!",400));
-    result && res.status(200).json({message:"Password have been updated...",result});
+    const userId = req.userId;
+    const {newPassword} = req.body;
+    const user = await userSchema.findByPk(userId);
+    const match = await bcrypt.compare(newPassword,user.password);
+    if(match) return next(new AppError("Password Match Old password!!!",400));
+    console.log(newPassword);
+    const hashedPassword = await bcrypt.hash(newPassword, Number(process.env.Rounds));
+    console.log(hashedPassword);
+    const update =await userSchema.update({password:hashedPassword},{where:{id:userId}});
+    const changePasswordAt= Date.now();
+    !update && next (new AppError("CANNOT CHANGE PASSWORD!!!",400));
+    update && res.status(200).json({message:"Password have been updated...",
+                                      changePasswordAt:user.changePasswordAt,
+                                      password:hashedPassword});
   }catch(err){
     console.log(err);
     res.status(500).json({message:"ERROR!!!",err});
+  }
+})
+
+//              2-SIGN IN
+const signin=catchAsyncError(async(req,res,next)=>{
+  try{
+    let {email,password} = req.body;
+    let isFound=await userSchema.findOne({where:{email}});
+    console.log(isFound.password);
+    if(!isFound) { 
+      next (new AppError("WRONG EMAIL !!!",400)) 
+    }else{
+      let matched= await bcrypt.compare(password,isFound.password);
+      if(!matched){
+        next (new AppError("WRONG PASSWORD !!!",401));
+      }else{
+        let token=jwt.sign({
+          name:isFound.name,
+          userId:isFound.id,
+          role:isFound.role,
+          email:isFound.email
+        }, process.env.SECRET_KEY);
+        let userActive=await userSchema.update({active:true},{where:{email,active:false}});
+        return res.status(200).json({message:"LOGIN SUCCESS...",token,userActive});
+      }
+    }
+  }catch(err){
+    console.log(err);
+    res.status(500).json({message:"ERROR!!!!!",err})
   }
 })
 
