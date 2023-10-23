@@ -9,7 +9,8 @@ export const addBlog = catchAsyncError(async (req, res, next) => {
   try {
     const { title, description} = req.body;
     const userId = req.userId;
-    const images = req.files.images;
+    const images = req.files.images; 
+    console.log(images);
     const blog = await blogSchema.create({
       title,
       description,

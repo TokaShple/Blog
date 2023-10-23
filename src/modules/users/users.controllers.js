@@ -113,11 +113,13 @@ const changePassword=catchAsyncError(async(req,res,next)=>{
     const user = await userSchema.findByPk(userId);
     const match = await bcrypt.compare(newPassword,user.password);
     if(match) return next(new AppError("Password Match Old password!!!",400));
-    console.log(newPassword);
+    console.log("NEW PASSWORD: ",newPassword);
     const hashedPassword = await bcrypt.hash(newPassword, Number(process.env.Rounds));
-    console.log(hashedPassword);
-    const update =await userSchema.update({password:hashedPassword},{where:{id:userId}});
-    const changePasswordAt= Date.now();
+    console.log("HASHED PASSWORD: ",hashedPassword);
+    user.changePasswordAt= Date.now();
+    const update =await userSchema.update({password:hashedPassword,
+                                           changePasswordAt:user.changePasswordAt},
+                                           {where:{id:userId}});
     !update && next (new AppError("CANNOT CHANGE PASSWORD!!!",400));
     update && res.status(200).json({message:"Password have been updated...",
                                       changePasswordAt:user.changePasswordAt,
