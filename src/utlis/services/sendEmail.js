@@ -1,7 +1,8 @@
+
 import nodemailer from "nodemailer";
 import { html } from "./email-template.js";
 import jwt from "jsonwebtoken";
-
+/*
 export const sendEmail =async (options) =>{
   let transporter = nodemailer.createTransport({
     service:"gmail",
@@ -20,4 +21,22 @@ export const sendEmail =async (options) =>{
     subject:"THIS IS YOUR VEFICATION EMAIL",
     html:html(token)
   })
+}
+*/
+
+export const sendEmail=async(email,subject,html)=>{
+  let transporter=nodemailer.createTransport({
+    service:'gmail',
+    auth:{
+      user:process.env.EMAIL_VERIFY,
+      pass:process.env.PASS_VERIFY
+    },
+  });
+  let info=await transporter.sendMail({
+    from:process.env.EMAIL_VERIFY,
+    to:email,
+    subject,
+    html,
+  });
+  console.log("Done.....");
 }
