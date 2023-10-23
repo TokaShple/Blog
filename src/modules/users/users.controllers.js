@@ -17,13 +17,47 @@ const signup =catchAsyncError (async (req,res,next)=>{
     }else{
       const user= await userSchema.create(req.body);
       await user.save();
-      sendEmail({email});
+
+      const token = jwt.sign({email:user.email,id:userId},process.env.TOKEN_SECRET_KEY_VERIFY);
+      const link = `${req.protocol}://${req.headers.host}/user/Verify Email/${token}`;
+      sendEmail(email,"Verify Your Email",`<a href = '${link}'> Verify Email </a>`);
+
       res.status(201).json({message:"User signed up successfully.....",user});
       }
     }catch(err){
       console.log(err);
       res.status(500).json({message:"ERROR!!!!!",err});
     }
+})
+
+//              2-SIGN IN
+const signin=catchAsyncError(async(req,res,next)=>{
+  try{
+    let {email,password} = req.body;
+    let isFound=await userSchema.findOne({where:{email}});
+    console.log(isFound.password);
+    if(!isFound) { 
+      next (new AppError("WRONG EMAIL !!!",400)) 
+    }else{
+      let matched= await bcrypt.compare(password,isFound.password);
+      if(!matched){
+        next (new AppError("WRONG PASSWORD !!!",401));
+      }else{
+        let token=jwt.sign({
+          name:isFound.name,
+          userId:isFound.id,
+          role:isFound.role,
+          email:isFound.email,
+          confirmed:isFound.confirmed
+        }, process.env.SECRET_KEY);
+        let userActive=await userSchema.update({active:true},{where:{email,active:false}});
+        return res.status(200).json({message:"LOGIN SUCCESS...",token,userActive});
+      }
+    }
+  }catch(err){
+    console.log(err);
+    res.status(500).json({message:"ERROR!!!!!",err})
+  }
 })
 
 //          3-Verification
@@ -33,7 +67,6 @@ const verification=catchAsyncError(async(req,res,next)=>{
     jwt.verify(token,process.env.TOKEN_SECRET_KEY_VERIFY,async(err,decoded)=>{
       if(err) return res.status(400).json({message:"INVALID!!!!!",err});
       let updated=await userSchema.update({confirmed:true},{where:{email:decoded.email,confirmed:false}});
-
       res.status(200).json({message:"CONFIRMED.....",updated});
     })
   }catch(err){
@@ -72,15 +105,25 @@ const updateUser=catchAsyncError(async(req,res,next)=>{
     const userId = req.userId;
     const {name,email,phone,age,profilePicture} = req.body;
     const user = await userSchema.findByPk(userId);
+    let updateUser;
     if(!user){
       next(new AppError("User Not Found!!",404));
     }else{
-      const updateUser=await userSchema.update(
-        {name:name,email:email,phone:phone,age:age,profilePicture:profilePicture},
-        { where: {id:userId} }
-      );
-      updateUser && res.status(200).json({message:"user updated...",user});
-      !updateUser && next(new AppError("User NOT UPDATED!!!!!",400));
+      updateUser=await userSchema.update({name:name,email:email,phone:phone,age:age,profilePicture:profilePicture},{ where: {id:userId} });
+      if(user.email !== updateUser.email) { 
+        let confirmed = req.confirmed;
+        updateUser=await userSchema.update({confirmed:false},{where:{id:userId}});
+
+        const token = jwt.sign({email:user.email,id:userId},process.env.TOKEN_SECRET_KEY_VERIFY);
+        const link = `${req.protocol}://${req.headers.host}/user/updateEmail/${token}`;
+        sendEmail(email,"Verify Your Email",`<a href = '${link}'> Udate Email </a>`);
+
+        updateUser && res.status(200).json({message:"User Email Updated...",user:user.email});
+        !updateUser && next(new AppError("User Email NOT UPDATED!!!!!",400));
+       }else{
+        updateUser && res.status(200).json({message:"user updated...",user});
+        !updateUser && next(new AppError("User NOT UPDATED!!!!!",400));
+       }
     }
   }catch(err){
     console.log(err);
@@ -127,35 +170,6 @@ const changePassword=catchAsyncError(async(req,res,next)=>{
   }catch(err){
     console.log(err);
     res.status(500).json({message:"ERROR!!!",err});
-  }
-})
-
-//              2-SIGN IN
-const signin=catchAsyncError(async(req,res,next)=>{
-  try{
-    let {email,password} = req.body;
-    let isFound=await userSchema.findOne({where:{email}});
-    console.log(isFound.password);
-    if(!isFound) { 
-      next (new AppError("WRONG EMAIL !!!",400)) 
-    }else{
-      let matched= await bcrypt.compare(password,isFound.password);
-      if(!matched){
-        next (new AppError("WRONG PASSWORD !!!",401));
-      }else{
-        let token=jwt.sign({
-          name:isFound.name,
-          userId:isFound.id,
-          role:isFound.role,
-          email:isFound.email
-        }, process.env.SECRET_KEY);
-        let userActive=await userSchema.update({active:true},{where:{email,active:false}});
-        return res.status(200).json({message:"LOGIN SUCCESS...",token,userActive});
-      }
-    }
-  }catch(err){
-    console.log(err);
-    res.status(500).json({message:"ERROR!!!!!",err})
   }
 })
 
