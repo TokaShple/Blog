@@ -111,8 +111,8 @@ const updateUser=catchAsyncError(async(req,res,next)=>{
     }else{
       updateUser=await userSchema.update({name:name,email:email,phone:phone,age:age,profilePicture:profilePicture},{ where: {id:userId} });
       if(user.email !== updateUser.email) { 
-        let confirmed = req.confirmed;
-        updateUser=await userSchema.update({confirmed:false},{where:{id:userId}});
+        //let confirmed = req.confirmed;
+        updateUser=await userSchema.update({confirmed:false},{where:{id:userId,confirmed:true}});
 
         const token = jwt.sign({email:user.email,id:userId},process.env.TOKEN_SECRET_KEY_VERIFY);
         const link = `${req.protocol}://${req.headers.host}/user/updateEmail/${token}`;
