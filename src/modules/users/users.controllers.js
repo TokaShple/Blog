@@ -49,8 +49,16 @@ const signin=catchAsyncError(async(req,res,next)=>{
           role:isFound.role,
           email:isFound.email,
           confirmed:isFound.confirmed
-        }, process.env.SECRET_KEY);
+        }, process.env.SECRET_KEY, {expiresIn:"1m"});
         let userActive=await userSchema.update({active:true},{where:{email,active:false}});
+
+        //check if the the token expired
+        const decodedToken = jwt.verify(token,process.env.SECRET_KEY);
+        let currentTime = Date.now() /  1000;
+        if (decodedToken.exp < currentTime) {
+          return res.status(401).json({ message: "Token expired" });
+        }
+
         return res.status(200).json({message:"LOGIN SUCCESS...",token,userActive});
       }
     }
