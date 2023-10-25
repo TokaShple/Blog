@@ -21,8 +21,8 @@ userRouter.route("/addProfilePicture")
 userRouter.route("/updateUser")
 .put(validation(updateUserSchema),auth,userController.updateUser);
 
-userRouter.route("/deleteUser")
-.delete(auth,userController.deleteUser);
+userRouter.route("/deactiveAccount")
+.delete(auth,userController.deactiveAccount);
 
 userRouter.route("/changePassword")
 .patch(auth,userController.changePassword);
@@ -30,8 +30,8 @@ userRouter.route("/changePassword")
 userRouter.route("/forgetPassword")
 .patch(userController.forgetPassword);
 
-userRouter.route("/deactivateUser")
-.patch(userController.deactivateUser);
+userRouter.route("/reactivateUser")
+.patch(userController.reactivateUser);
 
 userRouter.route("/logout")
 .put(userController.logout);

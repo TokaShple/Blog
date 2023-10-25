@@ -2,7 +2,7 @@ import jwt, { decode } from "jsonwebtoken";
 import { userSchema } from "../../../database/models/user.model.js";
 import catchAsyncError from "../../utlis/middleware/catchAsyncError.js";
 import AppError from "../../utlis/services/AppError.js";
-import bcrypt from "bcrypt";
+import bcrypt, { compare } from "bcrypt";
 import { sendEmail } from "../../utlis/services/sendEmail.js";
 import { DATE, where } from "sequelize";
 
@@ -131,17 +131,18 @@ const updateUser=catchAsyncError(async(req,res,next)=>{
   }
 })
 
-//              6-DELETE USER
-const deleteUser=catchAsyncError(async(req,res,next)=>{
+//              6-Deactive USER
+const deactiveAccount=catchAsyncError(async(req,res,next)=>{
   try{
     const userId = req.userId;
+    const {password} = req.body;
     const user = await userSchema.findByPk(userId);
-    if(!user){
-      return next(new AppError("USER NOT FOUND!!!",400));
-    }
-    const deleteUser = await userSchema.destroy({where:{id:userId}});
-    deleteUser && res.status(200).json({message:"User deleted",user});
-    !deleteUser && next(new AppError("CAN NOT DELETE USER!!!!!!",400));
+    if(!user) return next(new AppError("USER NOT FOUND!!!",400));
+    const matchPassword = await compare(password,user.password) ;
+    !matchPassword && next (new AppError("PASSWORD ISN'T CORRECT!!!!!",400)) ;
+    const deactiveAccount = await userSchema.destroy({where:{id:userId}});
+    deactiveAccount && res.status(200).json({message:"User deleted",user});
+    !deactiveAccount && next(new AppError("CAN NOT DELETE USER!!!!!!",400));
   }catch(err){
     console.log(err);
     res.status(500).json({message:"ERROR!!!",err});
@@ -183,8 +184,8 @@ const forgetPassword=catchAsyncError(async(req,res,next)=>{
   }
 })
 
-//              9-DEACTIVATE USER
-const deactivateUser=catchAsyncError(async(req,res,next)=>{
+//              9-REACTIVATE USER
+const reactivateUser=catchAsyncError(async(req,res,next)=>{
   try{
     
   }catch(err){
@@ -209,9 +210,9 @@ export{
   verification ,
   addProfilePicture,
   updateUser,
-  deleteUser,
+  deactiveAccount,
   changePassword,
   forgetPassword,
-  deactivateUser,
+  reactivateUser,
   logout
 };

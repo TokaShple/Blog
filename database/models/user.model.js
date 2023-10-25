@@ -59,6 +59,12 @@ export const userSchema = connection.define("user",{
   },
   changePasswordAt:{
     type:DataTypes.DATE,
+  },
+  deactiveAt:{
+    type:DataTypes.DATE,
+  },
+  reactiveAt:{
+    type:DataTypes.DATE,
   }
 },
 {
