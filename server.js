@@ -9,6 +9,9 @@ import AppError from "./src/utlis/services/AppError.js";
 import blogRouter from "./src/modules/blogs/blogs.routes.js";
 dotenv.config();
 const app=express();
+app.get("/favicon.ico", (req, res) => {
+  res.status(204).end();
+});
 app.use(cors());
 app.use(bodyParser.json());
 app.use("/api/v1/user",userRouter);

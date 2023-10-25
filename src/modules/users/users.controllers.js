@@ -5,6 +5,7 @@ import AppError from "../../utlis/services/AppError.js";
 import bcrypt, { compare } from "bcrypt";
 import { sendEmail } from "../../utlis/services/sendEmail.js";
 import { DATE, where } from "sequelize";
+import { blogSchema } from "../../../database/models/blog.model.js";
 
 //              1-SIGN UP
 const signup =catchAsyncError (async (req,res,next)=>{
@@ -49,7 +50,7 @@ const signin=catchAsyncError(async(req,res,next)=>{
           role:isFound.role,
           email:isFound.email,
           confirmed:isFound.confirmed
-        }, process.env.SECRET_KEY, {expiresIn:"1m"});
+        }, process.env.SECRET_KEY, {expiresIn:"1d"});
         let userActive=await userSchema.update({active:true},{where:{email,active:false}});
 
         //check if the the token expired
@@ -212,6 +213,21 @@ const logout=catchAsyncError(async(req,res,next)=>{
   }
 })
 
+//              11-GET USER WITH BLOGS
+const getUser = catchAsyncError(async(req,res,next)=>{
+  try{
+    const users = await userSchema.findAll({  
+      attributes:["name"],
+      include:[ {model:blogSchema,attributes:["id","title","description","images"]}  ]
+    });
+    users && res.status(200).json({message:"Done.......",users});
+    !users && res.status(400).json({message:"CAN NOT FOUND USERS!!!!!"});
+  }catch(err){
+    console.log(err);
+    res.status(500).json({message:"ERROR!!!",err});
+  }
+})
+
 export{ 
   signup,
   signin,
@@ -222,5 +238,6 @@ export{
   changePassword,
   forgetPassword,
   reactivateAccount,
-  logout
+  logout,
+  getUser
 };

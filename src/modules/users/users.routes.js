@@ -36,4 +36,7 @@ userRouter.route("/reactivateAccount")
 userRouter.route("/logout")
 .get(auth,userController.logout);
 
+userRouter.route("/allUsers")
+.get(userController.getUser);
+
 export default userRouter;
