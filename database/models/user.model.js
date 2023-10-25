@@ -65,6 +65,9 @@ export const userSchema = connection.define("user",{
   },
   reactiveAt:{
     type:DataTypes.DATE,
+  },
+  codeVerification:{
+    type:DataTypes.STRING,
   }
 },
 {
