@@ -30,10 +30,10 @@ userRouter.route("/changePassword")
 userRouter.route("/forgetPassword")
 .patch(userController.forgetPassword);
 
-userRouter.route("/reactivateUser")
-.patch(userController.reactivateUser);
+userRouter.route("/reactivateAccount")
+.patch(userController.reactivateAccount);
 
 userRouter.route("/logout")
-.put(userController.logout);
+.get(auth,userController.logout);
 
 export default userRouter;

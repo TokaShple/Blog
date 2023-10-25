@@ -184,8 +184,8 @@ const forgetPassword=catchAsyncError(async(req,res,next)=>{
   }
 })
 
-//              9-REACTIVATE USER
-const reactivateUser=catchAsyncError(async(req,res,next)=>{
+//              9-REACTIVATE Account
+const reactivateAccount=catchAsyncError(async(req,res,next)=>{
   try{
     
   }catch(err){
@@ -213,6 +213,6 @@ export{
   deactiveAccount,
   changePassword,
   forgetPassword,
-  reactivateUser,
+  reactivateAccount,
   logout
 };
