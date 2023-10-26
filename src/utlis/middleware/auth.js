@@ -37,6 +37,10 @@ export const auth=catchAsyncError(async(req,res,next)=>{
     if (user.changePasswordAt) console.log(changePasswordTime, "---------->", decoded.iat);
     if(changePasswordTime > decoded.iat) return next (new AppError("Invalid Token expired!!!",401));
 
+    let lastSeenTime =parseInt(new Date(user.lastseen).getTime()/1000);
+    if (user.lastseen) console.log(lastSeenTime, "---------->", decoded.iat);
+    if(lastSeenTime > decoded.iat) return next (new AppError("Invalid Token expired!!!",401));
+
     req.userId=user.id;
     next();
   }catch(err){

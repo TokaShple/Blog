@@ -23,9 +23,10 @@ export const uploadSingleFile = (folderName, fieldName) => {
     }
   }
 
-  const upload = multer({ storage, fileFilter });
+  //const upload = multer({ storage, fileFilter });
+  const upload = multer({ storage, fileFilter }).single(fieldName);
 
-  return upload.single(fieldName);
+  return upload/*.single(fieldName)*/;
 }
 
 ///////////////////////FOR MIX FILES

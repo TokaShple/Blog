@@ -53,6 +53,7 @@ export const userSchema = connection.define("user",{
   },
   profilePicture:{
     type:DataTypes.STRING,
+    allowNull:true,
   },
   lastseen:{
     type:DataTypes.DATE,
@@ -60,8 +61,9 @@ export const userSchema = connection.define("user",{
   changePasswordAt:{
     type:DataTypes.DATE,
   },
-  deactiveAt:{
+  deletedAt:{
     type:DataTypes.DATE,
+    paranoid:true
   },
   reactiveAt:{
     type:DataTypes.DATE,
@@ -73,7 +75,8 @@ export const userSchema = connection.define("user",{
 {
   timestamps:true,
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  paranoid:true //ENABLE Soft Delete
 })
 
 userSchema.beforeCreate(async (user, options) => {
