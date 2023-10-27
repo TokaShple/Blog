@@ -63,7 +63,6 @@ export const userSchema = connection.define("user",{
   },
   deletedAt:{
     type:DataTypes.DATE,
-    paranoid:true
   },
   reactiveAt:{
     type:DataTypes.DATE,

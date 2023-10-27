@@ -154,8 +154,8 @@ const updateUser=catchAsyncError(async(req,res,next)=>{
   }
 })
 
-//              6-Deactive USER
-const deactiveAccount=catchAsyncError(async(req,res,next)=>{
+//              6-Deactive Account
+const deleteAccount=catchAsyncError(async(req,res,next)=>{
   try{
     const userId = req.userId;
     const {password} = req.body;
@@ -163,9 +163,9 @@ const deactiveAccount=catchAsyncError(async(req,res,next)=>{
     if(!user) return next(new AppError("USER NOT FOUND!!!",400));
     const matchPassword = await compare(password,user.password) ;
     if(!matchPassword) return next (new AppError("PASSWORD ISN'T CORRECT!!!!!",400)) ;
-    const deactiveAccount = await userSchema.destroy({where:{id:userId}});
-    deactiveAccount && res.status(200).json({message:"User Deactivated....",deletedAt:user.deletedAt});
-    !deactiveAccount && next(new AppError("CAN NOT DELETE USER!!!!!!",400));
+    const deleteAccount = await userSchema.destroy({where:{id:userId}});
+    deleteAccount && res.status(200).json({message:"User Deleted....",deletedAt:user.deletedAt});
+    !deleteAccount && next(new AppError("CAN NOT DELETE USER!!!!!!",400));
   }catch(err){
     console.log(err);
     res.status(500).json({message:"ERROR!!!",err});
@@ -282,7 +282,7 @@ export{
   verification ,
   addProfilePicture,
   updateUser,
-  deactiveAccount,
+  deleteAccount,
   changePassword,
   forgetPassword,
   reactivateAccount,

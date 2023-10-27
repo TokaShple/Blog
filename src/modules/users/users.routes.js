@@ -6,11 +6,9 @@ import { signinschema, signupschema, updateUserSchema } from "./users.validator.
 import { uploadSingleFile } from "../../utlis/middleware/fileUploads.js";
 const userRouter=Router();
 
-/*userRouter.route("/signup")
-.post(uploadSingleFile('userProfilePicture','profilePicture'),validation(signupschema),userController.signup);
-*/
 userRouter.route("/signup")
-  .post(uploadSingleFile('userProfilePicture', 'profilePicture'), validation(signupschema), userController.signup);
+  .post(validation(signupschema), userController.signup);
+  
 userRouter.route("/signin")
 .post(validation(signinschema),userController.signin);
 
@@ -24,7 +22,7 @@ userRouter.route("/updateUser")
 .put(validation(updateUserSchema),auth,userController.updateUser);
 
 userRouter.route("/deactiveAccount")
-.patch(auth,userController.deactiveAccount);
+.patch(auth,userController.deleteAccount);
 
 userRouter.route("/changePassword")
 .patch(auth,userController.changePassword);
