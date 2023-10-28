@@ -46,27 +46,31 @@ const signin=catchAsyncError(async(req,res,next)=>{
     if(!isFound) { 
       next (new AppError("WRONG EMAIL !!!",400)) 
     }else{
-      let matched= await bcrypt.compare(password,isFound.password);
-      if(!matched){
-        next (new AppError("WRONG PASSWORD !!!",401));
+      if(isFound.deactiveAt != null) {
+        return res.status(401).json({message:"Please Reactive Your Account"});
       }else{
-        let token=jwt.sign({
-          name:isFound.name,
-          userId:isFound.id,
-          role:isFound.role,
-          email:isFound.email,
-          confirmed:isFound.confirmed
-        }, process.env.SECRET_KEY, {expiresIn:"1d"});
-        let userActive=await userSchema.update({active:true},{where:{email,active:false}});
+        let matched= await bcrypt.compare(password,isFound.password);
+        if(!matched){
+          next (new AppError("WRONG PASSWORD !!!",401));
+        }else{
+          let token=jwt.sign({
+            name:isFound.name,
+            userId:isFound.id,
+            role:isFound.role,
+            email:isFound.email,
+            confirmed:isFound.confirmed
+          }, process.env.SECRET_KEY, {expiresIn:"1d"});
+          let userActive=await userSchema.update({active:true},{where:{email,active:false}});
 
-        //check if the the token expired
-        const decodedToken = jwt.verify(token,process.env.SECRET_KEY);
-        let currentTime = Date.now() /  1000;
-        if (decodedToken.exp < currentTime) {
-          return res.status(401).json({ message: "Token expired" });
+          //check if the the token expired
+          const decodedToken = jwt.verify(token,process.env.SECRET_KEY);
+          let currentTime = Date.now() /  1000;
+          if (decodedToken.exp < currentTime) {
+            return res.status(401).json({ message: "Token expired" });
+          }
+
+          return res.status(200).json({message:"LOGIN SUCCESS...",token,userActive});
         }
-
-        return res.status(200).json({message:"LOGIN SUCCESS...",token,userActive});
       }
     }
   }catch(err){
@@ -75,7 +79,7 @@ const signin=catchAsyncError(async(req,res,next)=>{
   }
 })
 
-//          3-Verification
+//              3-Verification
 const verification=catchAsyncError(async(req,res,next)=>{
   try{
     let{token}=req.params;
@@ -154,7 +158,7 @@ const updateUser=catchAsyncError(async(req,res,next)=>{
   }
 })
 
-//              6-Deactive Account
+//              6-Delete Account
 const deleteAccount=catchAsyncError(async(req,res,next)=>{
   try{
     const userId = req.userId;
@@ -226,7 +230,7 @@ const forgetPassword=catchAsyncError(async(req,res,next)=>{
 const reactivateAccount = catchAsyncError(async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const user = await userSchema.findOne({ where: { email: email, deletedAt: { [Op.ne]: null } } });
+    const user = await userSchema.findOne({where:{email:email,deactiveAt:{[Op.ne]:null}}});
 
     if (!user) {
       return res.status(404).json({ message: "USER NOT FOUND!!!!" });
@@ -235,10 +239,16 @@ const reactivateAccount = catchAsyncError(async (req, res, next) => {
       if (!match) return res.status(401).json({ message: "PASSWORD DOESN'T MATCHED!!!" });
 
       await user.restore();
-      user.reactiveAt = Date.now() / 1000;
+      user.reactiveAt = Date.now() ;
+      user.deactiveAt = null;
+      await userSchema.update({reactiveAt:user.reactiveAt,
+                                deactiveAt:user.deactiveAt},
+                                {where:{email:email,deactiveAt:{[Op.ne]:null}}});
       await user.save();
 
-      return res.status(200).json({ message: "USER ACTIVATED......." });
+      return res.status(200).json({ message: "USER ACTIVATED......." ,
+                                    reactiveAt:user.reactiveAt,
+                                    deactiveAt:user.deactiveAt });
     }
   } catch (err) {
     console.log(err);
@@ -276,6 +286,25 @@ const getUser = catchAsyncError(async(req,res,next)=>{
   }
 })
 
+//              12-Deactive Account
+const deactiveAccount=catchAsyncError(async(req,res,next)=>{
+  try{
+    const userId = req.userId;
+    const {password} = req.body;
+    const user = await userSchema.findByPk(userId);
+    if(!user) return next(new AppError("USER NOT FOUND!!!",400));
+    const matchPassword = await compare(password,user.password) ;
+    if(!matchPassword) return next (new AppError("PASSWORD ISN'T CORRECT!!!!!",400)) ;
+    user.deactiveAt = Date.now() ;
+    const deactiveAccount = await userSchema.update({deactiveAt:user.deactiveAt},{where:{id:userId}});
+    deactiveAccount && res.status(200).json({message:"Account Deactivated....",deactiveAt:user.deactiveAt});
+    !deactiveAccount && next(new AppError("CAN NOT DELETE USER!!!!!!",400));
+  }catch(err){
+    console.log(err);
+    res.status(500).json({message:"ERROR!!!",err});
+  }
+})
+
 export{ 
   signup,
   signin,
@@ -287,5 +316,6 @@ export{
   forgetPassword,
   reactivateAccount,
   logout,
-  getUser
+  getUser,
+  deactiveAccount
 };

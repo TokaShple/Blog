@@ -39,7 +39,11 @@ export const auth=catchAsyncError(async(req,res,next)=>{
 
     let lastSeenTime =parseInt(new Date(user.lastseen).getTime()/1000);
     if (user.lastseen) console.log(lastSeenTime, "---------->", decoded.iat);
-    if(lastSeenTime > decoded.iat) return next (new AppError("Invalid Token expired!!!",401));
+    if(lastSeenTime > decoded.iat) return next (new AppError("Session expired!!!",401));
+
+    let deactiveTime =parseInt(new Date(user.deactiveAt).getTime()/1000);
+    if (user.deactiveAt) console.log(deactiveTime, "---------->", decoded.iat);
+    if(deactiveTime > decoded.iat) return next (new AppError("Reactive Account please!!!",401));
 
     req.userId=user.id;
     next();

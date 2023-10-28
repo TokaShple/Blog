@@ -39,4 +39,7 @@ userRouter.route("/logout")
 userRouter.route("/allUsers")
 .get(userController.getUser);
 
+userRouter.route("/deactiveAt")
+.patch(auth,userController.deactiveAccount);
+
 export default userRouter;
